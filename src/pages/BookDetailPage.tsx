@@ -5,6 +5,7 @@ import { allBooks, publishers, categories } from '../data/books';
 import type { Book } from '../types';
 import StarRating from '../components/StarRating';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const AUTHOR_BIOS: Record<string, { bio: string; avatar: string }> = {
   'Arjun Patel': {
@@ -41,17 +42,17 @@ function CoverLarge({ book }: { book: Book }) {
 
 function ReviewCard({ author, rating, text, date }: { author: string; rating: number; text: string; date: string }) {
   return (
-    <div className="py-4 border-b border-gray-700/40 last:border-0">
+    <div className="py-4 border-b border-base last:border-0">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-gray-200 font-medium text-sm">{author}</span>
-        <span className="text-gray-500 text-xs">{date}</span>
+        <span className="text-primary font-medium text-sm">{author}</span>
+        <span className="text-muted text-xs">{date}</span>
       </div>
-      <p className="text-gray-400 text-sm leading-relaxed">{text}</p>
+      <p className="text-secondary text-sm leading-relaxed">{text}</p>
       <div className="flex mt-2">
         {[1, 2, 3, 4, 5].map((i) => (
           <Star
             key={i}
-            className={`w-3.5 h-3.5 ${i <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
+            className={`w-3.5 h-3.5 ${i <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted'}`}
           />
         ))}
       </div>
@@ -66,7 +67,7 @@ interface BookDetailPageProps {
 export default function BookDetailPage({ bookId }: BookDetailPageProps) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const book = allBooks.find((b) => b.id === bookId);
+  const { toggleWishlist, isWishlisted } = useWishlist();
 
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(0);
@@ -74,31 +75,23 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
   const [reviews, setReviews] = useState(SAMPLE_REVIEWS);
   const [addedToCart, setAddedToCart] = useState(false);
 
-  if (!book) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-gray-500 gap-3">
-        <p className="text-lg">Book not found.</p>
-        <button onClick={() => navigate(-1)} className="text-blue-400 text-sm hover:underline">← Go back</button>
-      </div>
-    );
-  }
-
-  const publisher = publishers.find((p) => p.id === book.publisherId);
-  const catName = categories.find((c) => c.id === book.categoryId)?.name ?? 'Books';
-  const discount = book.originalPrice
-    ? Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)
-    : null;
-  const authorInfo = AUTHOR_BIOS[book.author];
+  // All hooks must be called before any conditional return
+  const book = allBooks.find((b) => b.id === bookId);
+  const wishlisted = isWishlisted(book?.id ?? -1);
 
   const handleAddToCart = () => {
+    if (!book) return;
     addToCart(book);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleBuyNow = () => {
-    addToCart(book);
-    navigate('/cart');
+  const handleToggleWishlist = () => {
+    if (!book) return;
+    const performed = toggleWishlist(book);
+    if (!performed) {
+      navigate('/login', { state: { from: `/book/${book.id}` } });
+    }
   };
 
   const submitReview = () => {
@@ -111,22 +104,38 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
     setReviewRating(0);
   };
 
+  if (!book) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted gap-3">
+        <p className="text-lg">Book not found.</p>
+        <button onClick={() => navigate(-1)} className="text-accent text-sm hover:underline">← Go back</button>
+      </div>
+    );
+  }
+
+  const publisher = publishers.find((p) => p.id === book.publisherId);
+  const catName = categories.find((c) => c.id === book.categoryId)?.name ?? 'Books';
+  const discount = book.originalPrice
+    ? Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)
+    : null;
+  const authorInfo = AUTHOR_BIOS[book.author];
+
   return (
-    <div className="flex-1 overflow-y-auto bg-[#0f172a]">
+    <div className="flex-1 overflow-y-auto bg-base">
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs text-gray-500 mb-4 flex-wrap">
-          <Link to="/" className="text-blue-400 hover:underline">Home</Link>
+        <nav className="flex items-center gap-1.5 text-xs text-muted mb-4 flex-wrap">
+          <Link to="/" className="text-accent hover:underline">Home</Link>
           <ChevronRight className="w-3 h-3" />
-          <Link to={`/catalogue/${book.categoryId}`} className="text-blue-400 hover:underline">{catName}</Link>
+          <Link to={`/catalogue/${book.categoryId}`} className="text-accent hover:underline">{catName}</Link>
           {book.genres[0] && (
             <>
               <ChevronRight className="w-3 h-3" />
-              <span className="text-blue-400 cursor-pointer hover:underline">{book.genres[0]}</span>
+              <span className="text-accent cursor-pointer hover:underline">{book.genres[0]}</span>
             </>
           )}
           <ChevronRight className="w-3 h-3" />
-          <span className="text-gray-300 truncate max-w-[180px]">{book.title}</span>
+          <span className="text-secondary truncate max-w-[180px]">{book.title}</span>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -136,28 +145,32 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
             <div className="flex flex-col sm:flex-row gap-6">
               {/* Cover */}
               <div className="shrink-0 w-full sm:w-52 lg:w-64">
-                <div className="w-full sm:w-52 lg:w-64 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl">
+                <div className="w-full sm:w-52 lg:w-64 aspect-[2/3] overflow-hidden shadow-2xl">
                   <CoverLarge book={book} />
                 </div>
                 {/* CTA buttons */}
                 <div className="flex flex-col gap-2 mt-4">
+                  {/* Primary: Add to Cart */}
                   <button
                     onClick={handleAddToCart}
-                    className={`w-full flex items-center justify-center gap-2 font-bold py-2.5 rounded-lg transition-all text-sm ${
-                      addedToCart
-                        ? 'bg-green-500 text-white'
-                        : 'bg-yellow-400 hover:bg-yellow-300 text-gray-900'
+                    className={`w-full justify-center py-2.5 text-sm ${
+                      addedToCart ? 'bw-btn-outline' : 'bw-btn-primary'
                     }`}
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    {addedToCart ? 'Added!' : 'Add to Cart'}
+                    {addedToCart ? 'Added to Cart!' : 'Add to Cart'}
                   </button>
+                  {/* Secondary: Wishlist toggle (members only — guests redirected to login) */}
                   <button
-                    onClick={handleBuyNow}
-                    className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-bold py-2.5 rounded-lg transition-colors text-sm"
+                    onClick={handleToggleWishlist}
+                    className="w-full bw-btn-outline justify-center py-2.5 text-sm"
+                    style={wishlisted ? {
+                      color: 'var(--bw-danger)',
+                      borderColor: 'var(--bw-danger)',
+                    } : {}}
                   >
-                    Add to Wishlist
-                    <Heart className="w-4 h-4" />
+                    <Heart className={`w-4 h-4 ${wishlisted ? 'fill-current' : ''}`} />
+                    {wishlisted ? 'Wishlisted' : 'Add to Wishlist'}
                   </button>
                 </div>
               </div>
@@ -166,52 +179,52 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap gap-2 mb-3">
                   {book.badge && (
-                    <span className="bg-orange-500 text-white text-[11px] font-bold px-2 py-0.5 rounded">{book.badge}</span>
+                    <span className="text-[11px] font-bold px-2 py-0.5" style={{ backgroundColor: 'var(--bw-action)', color: 'var(--bw-text-inverse)' }}>{book.badge}</span>
                   )}
-                  <span className="bg-gray-700 text-gray-300 text-[11px] px-2 py-0.5 rounded">{book.format}</span>
+                  <span className="bg-subtle text-secondary text-[11px] px-2 py-0.5">{book.format}</span>
                 </div>
 
-                <h1 className="text-white text-2xl md:text-3xl font-bold leading-tight">{book.title}</h1>
-                <p className="text-blue-400 text-sm mt-1 hover:underline cursor-pointer">by {book.author}</p>
+                <h1 className="text-primary text-2xl md:text-3xl font-bold leading-tight">{book.title}</h1>
+                <p className="text-accent text-sm mt-1 hover:underline cursor-pointer">by {book.author}</p>
 
                 {book.description && (
-                  <p className="text-gray-400 text-sm mt-3 leading-relaxed">{book.description}</p>
+                  <p className="text-secondary text-sm mt-3 leading-relaxed">{book.description}</p>
                 )}
 
                 {publisher && (
-                  <p className="text-gray-400 text-sm mt-2">
+                  <p className="text-secondary text-sm mt-2">
                     Published by:{' '}
-                    <span className="text-blue-400 hover:underline cursor-pointer">{publisher.name}</span>
+                    <span className="text-accent hover:underline cursor-pointer">{publisher.name}</span>
                   </p>
                 )}
 
-                <p className="text-gray-500 text-xs mt-1">{book.format}</p>
+                <p className="text-muted text-xs mt-1">{book.format}</p>
                 <div className="flex flex-wrap gap-x-1.5 mt-0.5">
                   {book.genres.map((g) => (
-                    <span key={g} className="text-blue-400 text-xs hover:underline cursor-pointer">{g}</span>
+                    <span key={g} className="text-accent text-xs hover:underline cursor-pointer">{g}</span>
                   ))}
                 </div>
 
                 <div className="flex items-baseline gap-3 mt-4">
-                  <span className="text-white text-3xl font-bold">₹{book.price}</span>
+                  <span className="text-primary text-3xl font-bold">₹{book.price}</span>
                   {book.originalPrice && (
                     <>
-                      <span className="text-gray-500 text-lg line-through">₹{book.originalPrice}</span>
-                      <span className="text-green-400 font-semibold text-sm">{discount}% off</span>
+                      <span className="text-muted text-lg line-through">₹{book.originalPrice}</span>
+                      <span className="text-success font-semibold text-sm">{discount}% off</span>
                     </>
                   )}
                 </div>
-                <p className="text-gray-400 text-sm mt-1">
-                  Delivery by <span className="text-white font-medium">{book.deliveryDate}</span>
+                <p className="text-secondary text-sm mt-1">
+                  Delivery by <span className="text-primary font-medium">{book.deliveryDate}</span>
                 </p>
 
                 {/* Quick stats row */}
-                <div className="flex flex-wrap gap-6 mt-5 text-sm text-gray-400">
+                <div className="flex flex-wrap gap-6 mt-5 text-sm text-secondary">
                   {book.language && (
                     <div className="flex items-center gap-1.5">
-                      <Globe className="w-4 h-4 text-blue-400" />
+                      <Globe className="w-4 h-4 text-accent" />
                       <span>Language</span>
-                      <span className="text-blue-400 hover:underline cursor-pointer">{book.language}</span>
+                      <span className="text-accent hover:underline cursor-pointer">{book.language}</span>
                     </div>
                   )}
                   {book.rating && (
@@ -222,7 +235,7 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
                     </div>
                   )}
                   <div className="flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4 text-blue-400" />
+                    <BookOpen className="w-4 h-4 text-accent" />
                     <span>{book.ratingCount ? `${book.ratingCount.toLocaleString()} copies sold` : `${book.pages ?? 0} pages`}</span>
                   </div>
                 </div>
@@ -232,14 +245,14 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
             {/* Author bio */}
             {authorInfo && (
               <div className="mt-8">
-                <h2 className="text-gray-200 font-bold text-base mb-3">About the writer</h2>
+                <h2 className="text-primary font-bold text-base mb-3">About the writer</h2>
                 <div className="flex gap-4">
-                  <div className="shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                  <div className="shrink-0 w-16 h-16 bg-accent flex items-center justify-center font-bold text-lg shadow-md" style={{ color: 'var(--bw-text-inverse)' }}>
                     {authorInfo.avatar}
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">{book.author}</p>
-                    <p className="text-gray-400 text-sm mt-1 leading-relaxed">{authorInfo.bio}</p>
+                    <p className="text-primary font-semibold text-sm">{book.author}</p>
+                    <p className="text-secondary text-sm mt-1 leading-relaxed">{authorInfo.bio}</p>
                   </div>
                 </div>
               </div>
@@ -248,64 +261,64 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
             {/* Metadata grid */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {book.pages && (
-                <div className="flex items-center gap-2 bg-[#1f2937] rounded-lg p-3">
-                  <BookOpen className="w-4 h-4 text-blue-400 shrink-0" />
+                <div className="flex items-center gap-2 bg-subtle p-3">
+                  <BookOpen className="w-4 h-4 text-accent shrink-0" />
                   <div>
-                    <p className="text-gray-500 text-[10px] uppercase tracking-wide">Pages</p>
-                    <p className="text-gray-200 text-sm font-medium">{book.pages}</p>
+                    <p className="text-muted text-[10px] uppercase tracking-wide">Pages</p>
+                    <p className="text-primary text-sm font-medium">{book.pages}</p>
                   </div>
                 </div>
               )}
               {book.language && (
-                <div className="flex items-center gap-2 bg-[#1f2937] rounded-lg p-3">
-                  <Globe className="w-4 h-4 text-blue-400 shrink-0" />
+                <div className="flex items-center gap-2 bg-subtle p-3">
+                  <Globe className="w-4 h-4 text-accent shrink-0" />
                   <div>
-                    <p className="text-gray-500 text-[10px] uppercase tracking-wide">Language</p>
-                    <p className="text-gray-200 text-sm font-medium">{book.language}</p>
+                    <p className="text-muted text-[10px] uppercase tracking-wide">Language</p>
+                    <p className="text-primary text-sm font-medium">{book.language}</p>
                   </div>
                 </div>
               )}
               {publisher && (
-                <div className="flex items-center gap-2 bg-[#1f2937] rounded-lg p-3">
+                <div className="flex items-center gap-2 bg-subtle p-3">
                   <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                    className="w-6 h-6 flex items-center justify-center text-white text-[9px] font-bold shrink-0"
                     style={{ backgroundColor: publisher.logoColor }}
                   >
                     {publisher.logoText.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-gray-500 text-[10px] uppercase tracking-wide">Publisher</p>
-                    <p className="text-gray-200 text-sm font-medium leading-tight">{publisher.name}</p>
+                    <p className="text-muted text-[10px] uppercase tracking-wide">Publisher</p>
+                    <p className="text-primary text-sm font-medium leading-tight">{publisher.name}</p>
                   </div>
                 </div>
               )}
               {book.isbn && (
-                <div className="flex items-center gap-2 bg-[#1f2937] rounded-lg p-3">
-                  <Hash className="w-4 h-4 text-blue-400 shrink-0" />
+                <div className="flex items-center gap-2 bg-subtle p-3">
+                  <Hash className="w-4 h-4 text-accent shrink-0" />
                   <div>
-                    <p className="text-gray-500 text-[10px] uppercase tracking-wide">ISBN</p>
-                    <p className="text-gray-200 text-xs font-mono leading-tight">{book.isbn}</p>
+                    <p className="text-muted text-[10px] uppercase tracking-wide">ISBN</p>
+                    <p className="text-primary text-xs font-mono leading-tight">{book.isbn}</p>
                   </div>
                 </div>
               )}
-              <div className="flex items-center gap-2 bg-[#1f2937] rounded-lg p-3">
-                <Package className="w-4 h-4 text-blue-400 shrink-0" />
+              <div className="flex items-center gap-2 bg-subtle p-3">
+                <Package className="w-4 h-4 text-accent shrink-0" />
                 <div>
-                  <p className="text-gray-500 text-[10px] uppercase tracking-wide">Format</p>
-                  <p className="text-gray-200 text-sm font-medium">{book.format}</p>
+                  <p className="text-muted text-[10px] uppercase tracking-wide">Format</p>
+                  <p className="text-primary text-sm font-medium">{book.format}</p>
                 </div>
               </div>
             </div>
 
             {/* Reviews */}
             <div className="mt-8">
-              <h2 className="text-gray-200 font-bold text-base mb-4">Reviews</h2>
+              <h2 className="text-primary font-bold text-base mb-4">Reviews</h2>
 
               {/* Write review */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-gray-400 text-xs">Leave Your Review</label>
-                  <span className="text-gray-600 text-xs">{reviewText.length}/100</span>
+                  <label className="text-secondary text-xs">Leave Your Review</label>
+                  <span className="text-muted text-xs">{reviewText.length}/100</span>
                 </div>
                 <textarea
                   placeholder="Placeholder text"
@@ -313,7 +326,7 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   rows={4}
-                  className="w-full bg-[#1f2937] text-gray-200 placeholder-gray-600 text-sm rounded-lg px-3 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500 resize-none transition-colors"
+                  className="bw-input resize-none"
                 />
                 {/* Star picker */}
                 <div className="flex items-center justify-between mt-2">
@@ -329,7 +342,7 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
                           className={`w-5 h-5 transition-colors ${
                             i <= (hoverRating || reviewRating)
                               ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-gray-600'
+                              : 'text-muted'
                           }`}
                         />
                       </button>
@@ -337,7 +350,7 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
                   </div>
                   <button
                     onClick={submitReview}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2 rounded-lg transition-colors text-sm"
+                    className="bw-btn-primary px-5 py-2"
                   >
                     Submit
                     <Send className="w-3.5 h-3.5" />
@@ -357,7 +370,7 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
           {/* ── Right column: related reads ── */}
           <div className="w-full lg:w-64 xl:w-72 shrink-0">
             <div className="sticky top-4">
-              <h2 className="text-white font-bold text-base mb-3">Related Reads</h2>
+              <h2 className="text-primary font-bold text-base mb-3">Related Reads</h2>
               <div className="flex flex-col gap-3">
                 {allBooks
                   .filter(
@@ -373,25 +386,25 @@ export default function BookDetailPage({ bookId }: BookDetailPageProps) {
                       onClick={() => navigate(`/book/${related.id}`)}
                     >
                       <div
-                        className="shrink-0 w-16 h-20 rounded-md overflow-hidden flex items-center justify-center p-1 text-center shadow"
+                        className="shrink-0 w-16 h-20 overflow-hidden flex items-center justify-center p-1 text-center shadow"
                         style={{ backgroundColor: related.coverColor, color: related.coverTextColor }}
                       >
                         <p className="font-bold text-[8px] uppercase leading-tight line-clamp-4">{related.title}</p>
                       </div>
                       <div className="flex-1 min-w-0 py-0.5">
-                        <p className="text-gray-200 text-xs font-semibold leading-tight line-clamp-2 group-hover:text-blue-300 transition-colors">
+                        <p className="text-primary text-xs font-semibold leading-tight line-clamp-2 group-hover:text-accent transition-colors">
                           {related.title}
                         </p>
-                        <p className="text-blue-400 text-[11px] mt-0.5 hover:underline">by {related.author}</p>
-                        <p className="text-gray-500 text-[10px] mt-0.5 line-clamp-2">{related.description}</p>
-                        <p className="text-gray-500 text-[10px]">{related.format}</p>
+                        <p className="text-accent text-[11px] mt-0.5 hover:underline">by {related.author}</p>
+                        <p className="text-muted text-[10px] mt-0.5 line-clamp-2">{related.description}</p>
+                        <p className="text-muted text-[10px]">{related.format}</p>
                         <div className="flex flex-wrap gap-x-1.5">
                           {related.genres.slice(0, 2).map((g) => (
-                            <span key={g} className="text-blue-400 text-[10px]">{g}</span>
+                            <span key={g} className="text-accent text-[10px]">{g}</span>
                           ))}
                         </div>
-                        <p className="text-white font-bold text-xs mt-1">₹{related.price}</p>
-                        <p className="text-gray-600 text-[10px]">Delivery by {related.deliveryDate}</p>
+                        <p className="text-primary font-bold text-xs mt-1">₹{related.price}</p>
+                        <p className="text-muted text-[10px]">Delivery by {related.deliveryDate}</p>
                       </div>
                     </div>
                   ))}

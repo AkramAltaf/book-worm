@@ -24,10 +24,10 @@ function CartItemRow({ item }: { item: CartItem }) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex gap-4 py-5 border-b border-gray-700/40 last:border-0">
+    <div className="flex gap-4 py-5 border-b border-base last:border-0">
       {/* Cover */}
       <div
-        className="shrink-0 w-24 h-32 rounded-lg overflow-hidden flex items-center justify-center p-2 text-center cursor-pointer shadow-md"
+        className="shrink-0 w-24 h-32 overflow-hidden flex items-center justify-center p-2 text-center cursor-pointer shadow-md"
         style={{ backgroundColor: item.book.coverColor, color: item.book.coverTextColor }}
         onClick={() => navigate(`/book/${item.book.id}`)}
       >
@@ -42,45 +42,45 @@ function CartItemRow({ item }: { item: CartItem }) {
       {/* Details */}
       <div className="flex-1 min-w-0">
         <h3
-          className="text-white font-semibold text-base leading-tight cursor-pointer hover:text-blue-300 transition-colors"
+          className="text-primary font-semibold text-base leading-tight cursor-pointer hover:text-accent transition-colors"
           onClick={() => navigate(`/book/${item.book.id}`)}
         >
           {item.book.title}
         </h3>
-        <p className="text-blue-400 text-xs mt-0.5 hover:underline cursor-pointer">
+        <p className="text-accent text-xs mt-0.5 hover:underline cursor-pointer">
           by {item.book.author}
         </p>
-        <p className="text-gray-400 text-xs mt-1 line-clamp-2">{item.book.description}</p>
-        <p className="text-gray-500 text-xs mt-1">{item.book.format}</p>
+        <p className="text-secondary text-xs mt-1 line-clamp-2">{item.book.description}</p>
+        <p className="text-muted text-xs mt-1">{item.book.format}</p>
         <div className="flex flex-wrap gap-x-1.5 mt-0.5">
           {item.book.genres.slice(0, 2).map((g) => (
-            <span key={g} className="text-blue-400 text-[11px] hover:underline cursor-pointer">{g}</span>
+            <span key={g} className="text-accent text-[11px] hover:underline cursor-pointer">{g}</span>
           ))}
         </div>
 
         <div className="flex items-center gap-4 mt-3 flex-wrap">
-          <p className="text-white font-bold text-lg">₹{item.book.price}</p>
-          <p className="text-gray-500 text-xs">Delivery by {item.book.deliveryDate}</p>
+          <p className="text-primary font-bold text-lg">₹{item.book.price}</p>
+          <p className="text-muted text-xs">Delivery by {item.book.deliveryDate}</p>
         </div>
 
         {/* Qty controls */}
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={() => updateQty(item.book.id, item.quantity - 1)}
-            className="w-7 h-7 flex items-center justify-center rounded border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white transition-colors"
+            className="w-7 h-7 flex items-center justify-center border border-base text-secondary hover:text-primary transition-colors"
           >
             <Minus className="w-3 h-3" />
           </button>
-          <span className="text-white font-medium text-sm w-6 text-center">{item.quantity}</span>
+          <span className="text-primary font-medium text-sm w-6 text-center">{item.quantity}</span>
           <button
             onClick={() => updateQty(item.book.id, item.quantity + 1)}
-            className="w-7 h-7 flex items-center justify-center rounded border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white transition-colors"
+            className="w-7 h-7 flex items-center justify-center border border-base text-secondary hover:text-primary transition-colors"
           >
             <Plus className="w-3 h-3" />
           </button>
           <button
             onClick={() => removeFromCart(item.book.id)}
-            className="ml-2 flex items-center gap-1 text-red-400 hover:text-red-300 text-xs transition-colors"
+            className="ml-2 flex items-center gap-1 text-danger hover:opacity-80 text-xs transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Remove
@@ -107,22 +107,22 @@ function AddressForm({
     type = 'text'
   ) => (
     <div className={className}>
-      <label className="text-gray-400 text-xs mb-1 block">{label}</label>
+      <label className="text-secondary text-xs mb-1 block">{label}</label>
       <input
         type={type}
         placeholder={placeholder}
         disabled={useSaved}
         value={addr[key]}
         onChange={(e) => setAddr({ ...addr, [key]: e.target.value })}
-        className="w-full bg-[#1f2937] disabled:opacity-50 text-gray-200 placeholder-gray-600 text-sm rounded px-3 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors"
+        className="bw-input"
       />
     </div>
   );
 
   return (
-    <div className="bg-[#1a2332] rounded-xl p-5 border border-gray-700/50">
+    <div className="bw-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-white font-bold text-base">Address</h2>
+        <h2 className="text-primary font-bold text-base">Address</h2>
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -130,7 +130,7 @@ function AddressForm({
             onChange={(e) => setUseSaved(e.target.checked)}
             className="w-4 h-4 accent-blue-500"
           />
-          <span className="text-gray-300 text-sm">Use Saved Address</span>
+          <span className="text-secondary text-sm">Use Saved Address</span>
         </label>
       </div>
 
@@ -143,27 +143,27 @@ function AddressForm({
         {field('City', 'city', 'City', '')}
         {field('Pin', 'pin', '000000', '')}
         <div>
-          <label className="text-gray-400 text-xs mb-1 block">Phone Number</label>
+          <label className="text-secondary text-xs mb-1 block">Phone Number</label>
           <div className="flex gap-2">
-            <div className="bg-[#1f2937] border border-gray-700 rounded px-2.5 py-2.5 text-gray-400 text-sm shrink-0">+91</div>
+            <div className="bg-subtle border border-base px-2.5 py-2.5 text-secondary text-sm shrink-0">+91</div>
             <input
               type="tel"
               placeholder="12345567890"
               disabled={useSaved}
               value={addr.phone}
               onChange={(e) => setAddr({ ...addr, phone: e.target.value })}
-              className="flex-1 bg-[#1f2937] disabled:opacity-50 text-gray-200 placeholder-gray-600 text-sm rounded px-3 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors"
+              className="bw-input"
             />
           </div>
         </div>
         {field('State', 'state', 'State', '')}
         <div>
-          <label className="text-gray-400 text-xs mb-1 block">Country</label>
+          <label className="text-secondary text-xs mb-1 block">Country</label>
           <select
             disabled={useSaved}
             value={addr.country}
             onChange={(e) => setAddr({ ...addr, country: e.target.value })}
-            className="w-full bg-[#1f2937] disabled:opacity-50 text-gray-200 text-sm rounded px-3 py-2.5 border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors"
+            className="bw-input"
           >
             <option>India</option>
             <option>United States</option>
@@ -197,14 +197,14 @@ function OrderSummaryPanel({
   const total = subtotal + tax + delivery - couponDiscount - giftDiscount;
 
   return (
-    <div className="bg-[#1a2332] rounded-xl border border-gray-700/50 overflow-hidden sticky top-4">
+    <div className="bw-card overflow-hidden sticky top-4">
       {/* Decorative illustration strip */}
-      <div className="h-28 bg-gradient-to-br from-blue-900/60 via-indigo-900/40 to-teal-900/60 flex items-center justify-center">
+      <div className="h-28 bg-accent-subtle flex items-center justify-center">
         <div className="flex gap-3 opacity-60">
           {['#e05c3a', '#1a5fa8', '#2d1b4e'].map((c, i) => (
             <div
               key={i}
-              className="rounded shadow-lg"
+              className="shadow-lg"
               style={{ backgroundColor: c, width: 32 + i * 6, height: 44 + i * 6 }}
             />
           ))}
@@ -212,20 +212,20 @@ function OrderSummaryPanel({
       </div>
 
       <div className="p-4">
-        <h3 className="text-white font-bold text-base mb-3">Grand Total</h3>
+        <h3 className="text-primary font-bold text-base mb-3">Grand Total</h3>
 
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between text-gray-300">
+          <div className="flex justify-between text-secondary">
             <span>Price ({itemCount} item{itemCount !== 1 ? 's' : ''})</span>
             <span>₹{subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-gray-300">
+          <div className="flex justify-between text-secondary">
             <span>Tax</span>
             <span>₹{tax.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-gray-300">
+          <div className="flex justify-between text-secondary">
             <span>Delivery Charges</span>
-            <span className={delivery === 0 ? 'text-green-400 font-medium' : ''}>
+            <span className={delivery === 0 ? 'text-success font-medium' : ''}>
               {delivery === 0 ? 'Free' : `₹${delivery}`}
             </span>
           </div>
@@ -238,11 +238,11 @@ function OrderSummaryPanel({
             placeholder="Apply Coupon"
             value={coupon}
             onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-            className="flex-1 bg-[#1f2937] text-gray-200 placeholder-gray-600 text-sm rounded px-3 py-2 border border-gray-700 focus:outline-none focus:border-blue-500"
+            className="bw-input"
           />
           <button
             onClick={onApplyCoupon}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm px-4 py-2 rounded transition-colors"
+            className="bw-btn-primary shrink-0"
           >
             Apply
           </button>
@@ -251,10 +251,10 @@ function OrderSummaryPanel({
         {/* Gift Points */}
         <button
           onClick={onToggleGiftPoints}
-          className={`mt-3 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm transition-colors ${
+          className={`mt-3 w-full flex items-center justify-between px-3 py-2.5 border text-sm transition-colors ${
             giftApplied
-              ? 'border-green-500/50 bg-green-500/10 text-green-400'
-              : 'border-gray-700 text-gray-300 hover:border-gray-500'
+              ? 'border-success bg-success-subtle text-success'
+              : 'border-base text-secondary hover:text-primary'
           }`}
         >
           <span className="flex items-center gap-2">
@@ -268,13 +268,13 @@ function OrderSummaryPanel({
         {(couponDiscount > 0 || giftDiscount > 0) && (
           <div className="space-y-1 mt-3">
             {couponDiscount > 0 && (
-              <div className="flex justify-between text-green-400 text-sm">
+              <div className="flex justify-between text-success text-sm">
                 <span>Coupon Discount</span>
                 <span>−₹{couponDiscount}</span>
               </div>
             )}
             {giftDiscount > 0 && (
-              <div className="flex justify-between text-green-400 text-sm">
+              <div className="flex justify-between text-success text-sm">
                 <span>Gift Points</span>
                 <span>−₹{giftDiscount}</span>
               </div>
@@ -282,14 +282,14 @@ function OrderSummaryPanel({
           </div>
         )}
 
-        <div className="flex justify-between text-white font-bold text-base mt-3 pt-3 border-t border-gray-700/50">
+        <div className="flex justify-between text-primary font-bold text-base mt-3 pt-3 border-t border-base">
           <span>Total Amount</span>
           <span>₹{total}</span>
         </div>
 
         <button
           onClick={onPayNow}
-          className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-colors text-sm"
+          className="mt-4 w-full bw-btn-primary justify-center py-3 text-sm"
         >
           Pay Now
           <ChevronRight className="w-4 h-4" />
@@ -345,13 +345,13 @@ export default function CartPage() {
 
   if (items.length === 0 && !showConfirmation) {
     return (
-      <div className="flex-1 bg-[#0f172a] flex flex-col items-center justify-center gap-4 py-20">
-        <ShoppingCart className="w-16 h-16 text-gray-600" />
-        <p className="text-gray-300 text-lg font-medium">Your cart is empty</p>
-        <p className="text-gray-500 text-sm">Add some books to get started!</p>
+      <div className="flex-1 bg-base flex flex-col items-center justify-center gap-4 py-20">
+        <ShoppingCart className="w-16 h-16 text-muted" />
+        <p className="text-secondary text-lg font-medium">Your cart is empty</p>
+        <p className="text-muted text-sm">Add some books to get started!</p>
         <button
           onClick={() => navigate('/')}
-          className="mt-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-lg transition-colors text-sm"
+          className="mt-2 bw-btn-primary px-6 py-2.5 text-sm"
         >
           Browse Books
         </button>
@@ -361,32 +361,32 @@ export default function CartPage() {
 
   return (
     <>
-      <div className="flex-1 bg-[#0f172a] overflow-y-auto">
+      <div className="flex-1 bg-base overflow-y-auto">
         <div className="max-w-7xl mx-auto px-4 py-5">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-1.5 text-xs text-gray-500 mb-4 flex-wrap">
-            <Link to="/" className="text-blue-400 hover:underline">Home</Link>
+          <nav className="flex items-center gap-1.5 text-xs text-muted mb-4 flex-wrap">
+            <Link to="/" className="text-accent hover:underline">Home</Link>
             <ChevronRight className="w-3 h-3" />
-            <Link to={`/catalogue/${firstBook?.categoryId ?? 'all'}`} className="text-blue-400 hover:underline">
+            <Link to={`/catalogue/${firstBook?.categoryId ?? 'all'}`} className="text-accent hover:underline">
               {catName}
             </Link>
             {firstBook && (
               <>
                 <ChevronRight className="w-3 h-3" />
-                <Link to={`/book/${firstBook.id}`} className="text-blue-400 hover:underline">{firstBook.title}</Link>
+                <Link to={`/book/${firstBook.id}`} className="text-accent hover:underline">{firstBook.title}</Link>
               </>
             )}
             <ChevronRight className="w-3 h-3" />
-            <span className="text-gray-300">Checkout</span>
+            <span className="text-secondary">Checkout</span>
           </nav>
 
-          <h1 className="text-white text-2xl font-bold mb-5">Shopping Cart</h1>
+          <h1 className="text-2xl font-bold text-primary mb-5">Shopping Cart</h1>
 
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left: items + address */}
             <div className="flex-1 min-w-0 space-y-5">
               {/* Cart items */}
-              <div className="bg-[#1a2332] rounded-xl px-5 border border-gray-700/50">
+              <div className="bw-card px-5">
                 {items.map((item) => (
                   <CartItemRow key={item.book.id} item={item} />
                 ))}

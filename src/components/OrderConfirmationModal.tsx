@@ -11,68 +11,67 @@ interface OrderConfirmationModalProps {
 export default function OrderConfirmationModal({ items, orderId, onClose }: OrderConfirmationModalProps) {
   const navigate = useNavigate();
 
-  const handleContinue = () => {
-    onClose();
-    navigate('/');
-  };
+  const handleContinue = () => { onClose(); navigate('/'); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="bg-[#1e2433] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+      <div
+        className="w-full max-w-2xl overflow-hidden theme-transition"
+        style={{ background: 'var(--bw-bg-elevated)', border: '1px solid var(--bw-border)', boxShadow: 'var(--bw-shadow-lg)' }}
+      >
         {/* Success header */}
         <div className="flex flex-col items-center pt-8 pb-5 px-6">
-          <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 mb-4">
+          <div
+            className="w-14 h-14 flex items-center justify-center mb-4"
+            style={{ background: 'var(--bw-success)', boxShadow: '0 0 20px rgba(63,185,80,0.4)' }}
+          >
             <CheckCircle className="w-8 h-8 text-white" strokeWidth={2.5} />
           </div>
-          <h2 className="text-white text-xl font-bold text-center leading-snug">
+          <h2 className="text-xl font-bold text-center leading-snug" style={{ color: 'var(--bw-text-primary)' }}>
             Your purchase of the<br />following reads is successful
           </h2>
-          <p className="text-gray-500 text-xs mt-2">Order ID: {orderId}</p>
+          <p className="text-xs mt-2" style={{ color: 'var(--bw-text-muted)' }}>Order ID: {orderId}</p>
         </div>
 
-        {/* Purchased books */}
+        {/* Books */}
         <div className="px-6 pb-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {items.map(({ book, quantity }) => (
               <div key={book.id} className="flex gap-3">
-                {/* Cover */}
                 <div
-                  className="shrink-0 w-24 h-32 rounded-lg overflow-hidden flex items-center justify-center p-2 text-center shadow-md"
-                  style={{ backgroundColor: book.coverColor, color: book.coverTextColor }}
+                  className="shrink-0 w-24 h-32 overflow-hidden flex items-center justify-center p-2 text-center"
+                  style={{ backgroundColor: book.coverColor, color: book.coverTextColor, boxShadow: 'var(--bw-shadow-md)' }}
                 >
                   <div>
                     <p className="font-bold text-[11px] uppercase leading-tight tracking-wide line-clamp-3">{book.title}</p>
                     <p className="text-[9px] mt-1 opacity-70">{book.author}</p>
                   </div>
                 </div>
-                {/* Info */}
                 <div className="flex-1 min-w-0 py-1">
-                  <h3 className="text-white font-semibold text-sm leading-tight">{book.title}</h3>
-                  <button className="text-blue-400 text-xs mt-0.5 hover:underline">
-                    by {book.author}
-                  </button>
-                  <p className="text-gray-400 text-xs mt-1 line-clamp-2">{book.description}</p>
-                  <p className="text-gray-500 text-xs mt-1">{book.format}</p>
+                  <h3 className="font-semibold text-sm leading-tight" style={{ color: 'var(--bw-text-primary)' }}>{book.title}</h3>
+                  <p className="text-xs mt-0.5 hover:underline cursor-pointer" style={{ color: 'var(--bw-accent)' }}>by {book.author}</p>
+                  <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--bw-text-secondary)' }}>{book.description}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--bw-text-muted)' }}>{book.format}</p>
                   <div className="flex flex-wrap gap-x-1.5 mt-0.5">
                     {book.genres.slice(0, 2).map((g) => (
-                      <span key={g} className="text-blue-400 text-[11px]">{g}</span>
+                      <span key={g} className="text-[11px]" style={{ color: 'var(--bw-accent)' }}>{g}</span>
                     ))}
                   </div>
-                  <p className="text-white font-bold text-sm mt-1.5">
+                  <p className="font-bold text-sm mt-1.5" style={{ color: 'var(--bw-text-primary)' }}>
                     ₹{book.price}{quantity > 1 && ` × ${quantity}`}
                   </p>
-                  <p className="text-gray-500 text-[11px]">Delivery by {book.deliveryDate}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--bw-text-muted)' }}>Delivery by {book.deliveryDate}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Continue button */}
+        {/* CTA */}
         <div className="px-6 pb-7 flex justify-center">
           <button
             onClick={handleContinue}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-2.5 rounded-lg transition-colors text-sm"
+            className="flex items-center gap-2 font-bold px-8 py-2.5 transition-colors bw-btn-primary"
           >
             Continue your Shopping
             <ShoppingBag className="w-4 h-4" />

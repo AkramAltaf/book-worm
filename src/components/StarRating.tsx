@@ -19,14 +19,14 @@ export default function StarRating({ rating, count, size = 'sm' }: StarRatingPro
             className={`${starSize} ${
               i <= Math.round(rating)
                 ? 'text-yellow-400 fill-yellow-400'
-                : 'text-gray-600 fill-gray-600'
+                : 'text-muted fill-current'
             }`}
           />
         ))}
       </div>
       <span className={`text-yellow-400 font-medium ${textSize}`}>{rating.toFixed(1)}</span>
       {count !== undefined && (
-        <span className={`text-gray-500 ${textSize}`}>({count.toLocaleString()})</span>
+        <span className={`text-muted ${textSize}`}>({count.toLocaleString()})</span>
       )}
     </div>
   );

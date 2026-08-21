@@ -14,34 +14,45 @@ const filterOptions = [
 
 export default function FilterBar({ searchQuery, onSearchChange }: FilterBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-[#111827] border-b border-gray-700/50">
+    <div
+      className="flex flex-wrap items-center gap-3 px-4 py-3 theme-transition bg-surface"
+      style={{ borderBottom: '1px solid var(--bw-border)' }}
+    >
       {/* Search */}
       <div className="relative flex-1 min-w-[180px] max-w-xs">
         <input
           type="text"
-          placeholder="Search you want to read here"
+          placeholder="Search books, authors…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full bg-[#1f2937] text-gray-200 placeholder-gray-500 text-sm rounded px-3 py-2 pr-8 border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors"
+          className="bw-input pr-8"
         />
-        <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+        <Search
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+          style={{ color: 'var(--bw-text-muted)' }}
+        />
       </div>
 
       {/* Filter dropdowns */}
       {filterOptions.map((filter) => (
         <div key={filter.label} className="relative">
           <select
-            className="appearance-none bg-[#1f2937] text-gray-300 text-sm rounded px-3 py-2 pr-7 border border-gray-700 focus:outline-none focus:border-blue-500 cursor-pointer transition-colors"
+            className="appearance-none bw-input pr-7 w-auto"
             defaultValue={filter.options[0]}
+            style={{ paddingTop: '0.375rem', paddingBottom: '0.375rem' }}
           >
             {filter.options.map((opt) => (
-              <option key={opt} value={opt} className="bg-[#1f2937]">
-                {opt}
-              </option>
+              <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-          <span className="absolute left-3 -top-1.5 text-[10px] text-gray-500 bg-[#111827] px-0.5">
+          <ChevronDown
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+            style={{ color: 'var(--bw-text-muted)' }}
+          />
+          <span
+            className="absolute left-3 -top-1.5 text-[10px] px-0.5 bg-surface"
+            style={{ color: 'var(--bw-text-muted)' }}
+          >
             {filter.label}
           </span>
         </div>

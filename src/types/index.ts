@@ -77,6 +77,49 @@ export interface Review {
 
 export type PaymentMethod = 'credit-card' | 'debit-card' | 'upi' | 'wallet';
 
+// ── Auth ────────────────────────────────────────────────────────────────────
+
+export type UserRole = 'guest' | 'member';
+
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  avatarInitials: string;
+  createdAt: string;
+  /** Points balance (₹1 = 1 point) */
+  giftPoints: number;
+}
+
+export interface AuthCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload extends AuthCredentials {
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * Opaque token shape — identical to what a real JWT response would carry.
+ * Replace body of authService methods with HTTP calls and this stays the same.
+ */
+export interface AuthToken {
+  accessToken: string;
+  /** seconds from now */
+  expiresIn: number;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: AuthToken | null;
+  isAuthenticated: boolean;
+  isGuest: boolean;
+}
+
 export type SortOption = 'Relevance' | 'Price: Low to High' | 'Price: High to Low' | 'Newest';
 export type FormatOption = 'All' | 'Paperback' | 'Hard Cover' | 'eBook';
 export type LanguageOption = 'All' | 'English' | 'Hindi' | 'Tamil' | 'Telugu';
