@@ -9,14 +9,22 @@ interface BookSectionProps {
 
 export default function BookSection({ title, books, onBookClick }: BookSectionProps) {
   return (
-    <section className="mb-7">
+    <section className="mb-8">
       <h2
         className="font-bold text-base mb-3 px-4"
         style={{ color: 'var(--bw-text-primary)' }}
       >
         {title}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 px-4">
+
+      <div
+        className="px-4"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+          gap: '12px',
+        }}
+      >
         {books.map((book) => (
           <BookCard key={book.id} book={book} onClick={onBookClick} />
         ))}

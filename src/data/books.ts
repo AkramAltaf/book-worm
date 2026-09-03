@@ -461,6 +461,10 @@ export const newLaunchBooks = allBooks.filter((b) =>
   [7, 8, 9].includes(b.id)
 );
 
+// Books not assigned to any curated section — shown as "All Books" on home page
+const curatedIds = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+export const remainingBooks = allBooks.filter((b) => !curatedIds.has(b.id));
+
 export const sampleOrders: Order[] = [
   {
     id: 'ORD-10045',

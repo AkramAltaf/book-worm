@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Minus, Plus, Trash2, Tag, ChevronRight, ShoppingCart } from 'lucide-react';
+import { Minus, Plus, Trash2, Tag, ChevronRight, ShoppingCart, LogIn, UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { categories } from '../data/books';
 import PaymentModal from '../components/PaymentModal';
 import OrderConfirmationModal from '../components/OrderConfirmationModal';
@@ -178,7 +179,7 @@ function AddressForm({
 
 function OrderSummaryPanel({
   subtotal, itemCount, giftPoints, giftApplied, coupon, setCoupon,
-  onApplyCoupon, couponDiscount, onToggleGiftPoints, onPayNow,
+  onApplyCoupon, couponDiscount, onToggleGiftPoints, onPayNow, isAuthenticated,
 }: {
   subtotal: number;
   itemCount: number;
@@ -190,6 +191,7 @@ function OrderSummaryPanel({
   couponDiscount: number;
   onToggleGiftPoints: () => void;
   onPayNow: () => void;
+  isAuthenticated: boolean;
 }) {
   const tax = Math.round(subtotal * TAX_RATE);
   const delivery = subtotal >= DELIVERY_THRESHOLD ? 0 : 40;
@@ -291,8 +293,14 @@ function OrderSummaryPanel({
           onClick={onPayNow}
           className="mt-4 w-full bw-btn-primary justify-center py-3 text-sm"
         >
-          Pay Now
-          <ChevronRight className="w-4 h-4" />
+          {isAuthenticated ? (
+            <>Pay Now <ChevronRight className="w-4 h-4" /></>
+          ) : (
+            <>
+              <LogIn className="w-4 h-4" />
+              Sign In to Checkout
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -301,6 +309,7 @@ function OrderSummaryPanel({
 
 export default function CartPage() {
   const { items, subtotal, totalItems, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [useSaved, setUseSaved] = useState(false);
@@ -328,7 +337,14 @@ export default function CartPage() {
   const giftDiscount = giftApplied ? Math.min(GIFT_POINTS_BALANCE, subtotal) : 0;
   const payableAmount = subtotal + tax + delivery - couponDiscount - giftDiscount;
 
-  const handlePayNow = () => setShowPayment(true);
+  // Only members can check out — redirect unauthenticated users to login
+  const handlePayNow = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/cart', reason: 'checkout' } });
+      return;
+    }
+    setShowPayment(true);
+  };
 
   const handlePaymentComplete = () => {
     setPurchasedItems([...items]);
@@ -382,6 +398,42 @@ export default function CartPage() {
 
           <h1 className="text-2xl font-bold text-primary mb-5">Shopping Cart</h1>
 
+          {/* ── Auth required banner (guests & anonymous visitors) ── */}
+          {!isAuthenticated && (
+            <div
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 mb-6"
+              style={{
+                background: 'var(--bw-warning-subtle)',
+                border: '1px solid var(--bw-warning)',
+              }}
+            >
+              <div>
+                <p className="font-semibold text-sm" style={{ color: 'var(--bw-text-primary)' }}>
+                  Sign in to complete your purchase
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--bw-text-secondary)' }}>
+                  You can browse and add books to your cart freely, but a Book Worm account is required to check out.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => navigate('/login', { state: { from: '/cart', reason: 'checkout' } })}
+                  className="bw-btn-primary px-4 py-2 text-sm flex items-center gap-1.5"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  Sign In
+                </button>
+                <button
+                  onClick={() => navigate('/login', { state: { from: '/cart', reason: 'checkout', tab: 'register' } })}
+                  className="bw-btn-outline px-4 py-2 text-sm flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Register
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left: items + address */}
             <div className="flex-1 min-w-0 space-y-5">
@@ -392,16 +444,18 @@ export default function CartPage() {
                 ))}
               </div>
 
-              {/* Address */}
-              <AddressForm
-                useSaved={useSaved}
-                setUseSaved={(v) => {
-                  setUseSaved(v);
-                  if (v) setAddr(SAVED_ADDRESS);
-                }}
-                addr={effectiveAddr}
-                setAddr={setAddr}
-              />
+              {/* Address — only shown to authenticated members */}
+              {isAuthenticated && (
+                <AddressForm
+                  useSaved={useSaved}
+                  setUseSaved={(v) => {
+                    setUseSaved(v);
+                    if (v) setAddr(SAVED_ADDRESS);
+                  }}
+                  addr={effectiveAddr}
+                  setAddr={setAddr}
+                />
+              )}
             </div>
 
             {/* Right: summary + recommendations */}
@@ -417,6 +471,7 @@ export default function CartPage() {
                 couponDiscount={couponDiscount}
                 onToggleGiftPoints={() => setGiftApplied((v) => !v)}
                 onPayNow={handlePayNow}
+                isAuthenticated={isAuthenticated}
               />
               <RecommendedFromHistory />
             </div>

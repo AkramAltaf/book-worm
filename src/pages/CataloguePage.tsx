@@ -2,69 +2,11 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 import { allBooks, publishers, categories } from '../data/books';
-import type { Book } from '../types';
-import StarRating from '../components/StarRating';
 import BrandBrowser from '../components/BrandBrowser';
+import BookCard from '../components/BookCard';
 
 type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'rating';
 type FormatFilter = 'All' | 'Paperback' | 'Hard Cover' | 'eBook';
-
-function BookGridCard({ book, onClick }: { book: Book; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="group flex flex-col text-left overflow-hidden transition-all bw-card"
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--bw-accent)';
-        e.currentTarget.style.background = 'var(--bw-bg-hover)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--bw-border)';
-        e.currentTarget.style.background = 'var(--bw-bg-surface)';
-      }}
-    >
-      <div
-        className="w-full h-44 flex items-center justify-center p-4 text-center"
-        style={{ backgroundColor: book.coverColor, color: book.coverTextColor }}
-      >
-        <div>
-          <p className="font-bold text-sm leading-tight uppercase tracking-wide line-clamp-3">{book.title}</p>
-          <p className="text-[11px] mt-1.5 opacity-75">{book.author}</p>
-        </div>
-      </div>
-      <div className="p-3 flex flex-col gap-1 flex-1">
-        <h3 className="text-sm font-semibold leading-tight line-clamp-2 transition-colors" style={{ color: 'var(--bw-text-primary)' }}>
-          {book.title}
-        </h3>
-        <p className="text-xs" style={{ color: 'var(--bw-accent)' }}>by {book.author}</p>
-        {book.rating && <StarRating rating={book.rating} count={book.ratingCount} />}
-        <div className="flex flex-wrap gap-1 mt-0.5">
-          {book.genres.slice(0, 2).map((g) => (
-            <span
-              key={g}
-              className="text-[10px] px-1.5 py-0.5"
-              style={{ background: 'var(--bw-bg-subtle)', color: 'var(--bw-text-secondary)' }}
-            >
-              {g}
-            </span>
-          ))}
-        </div>
-        <div className="flex items-baseline gap-2 mt-auto pt-2">
-          <span className="font-bold text-sm" style={{ color: 'var(--bw-text-primary)' }}>₹{book.price}</span>
-          {book.originalPrice && (
-            <span className="text-xs line-through" style={{ color: 'var(--bw-text-muted)' }}>₹{book.originalPrice}</span>
-          )}
-          {book.originalPrice && (
-            <span className="text-xs font-medium" style={{ color: 'var(--bw-success)' }}>
-              {Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)}% off
-            </span>
-          )}
-        </div>
-        <p className="text-[11px]" style={{ color: 'var(--bw-text-muted)' }}>{book.format}</p>
-      </div>
-    </button>
-  );
-}
 
 export default function CataloguePage({ categoryId }: { categoryId: string }) {
   const navigate = useNavigate();
@@ -197,9 +139,15 @@ export default function CataloguePage({ categoryId }: { categoryId: string }) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '12px',
+            }}
+          >
             {filtered.map((book) => (
-              <BookGridCard key={book.id} book={book} onClick={() => navigate(`/book/${book.id}`)} />
+              <BookCard key={book.id} book={book} onClick={() => navigate(`/book/${book.id}`)} />
             ))}
           </div>
         )}

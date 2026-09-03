@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { BookOpen, Eye, EyeOff, Loader2, User, Mail, Lock, ArrowRight, Gift } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, Loader2, User, Mail, Lock, ArrowRight, Gift, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 type Tab = 'login' | 'register';
@@ -234,8 +234,12 @@ export default function LoginPage() {
   const location = useLocation();
   const { continueAsGuest, isAuthenticated } = useAuth();
 
-  // Where to redirect after login (passed via location state from ProtectedRoute)
-  const from: string = (location.state as { from?: string })?.from ?? '/';
+  const locationState = location.state as { from?: string; reason?: string; tab?: Tab } | null;
+  const from: string   = locationState?.from ?? '/';
+  // When redirected from checkout, guests cannot proceed — hide the guest option
+  const isCheckout     = locationState?.reason === 'checkout';
+  // Support pre-selecting register tab (e.g. from the cart banner "Register" button)
+  const [tab, setTab]  = useState<Tab>(locationState?.tab ?? 'login');
 
   // Already authenticated — redirect away immediately
   if (isAuthenticated) {
@@ -243,11 +247,7 @@ export default function LoginPage() {
     return null;
   }
 
-  const [tab, setTab] = useState<Tab>('login');
-
-  const handleSuccess = () => {
-    navigate(from, { replace: true });
-  };
+  const handleSuccess = () => navigate(from, { replace: true });
 
   const handleGuest = () => {
     continueAsGuest();
@@ -273,6 +273,19 @@ export default function LoginPage() {
           </Link>
           <p className="text-secondary text-sm">Your personal reading companion</p>
         </div>
+
+        {/* Checkout context notice */}
+        {isCheckout && (
+          <div
+            className="flex items-start gap-3 px-4 py-3 mb-4"
+            style={{ background: 'var(--bw-warning-subtle)', border: '1px solid var(--bw-warning)' }}
+          >
+            <ShoppingCartIcon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--bw-warning)' }} />
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--bw-text-secondary)' }}>
+              Your cart is saved. Sign in or create a free account to complete your purchase.
+            </p>
+          </div>
+        )}
 
         {/* Card */}
         <div className="bw-card overflow-hidden shadow-2xl">
@@ -301,21 +314,23 @@ export default function LoginPage() {
               <RegisterForm onSuccess={handleSuccess} />
             )}
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-subtle" />
-              <span className="text-muted text-xs">or</span>
-              <div className="flex-1 h-px bg-subtle" />
-            </div>
-
-            {/* Guest access */}
-            <button
-              onClick={handleGuest}
-              className="w-full bw-btn-outline justify-center py-2.5"
-            >
-              <User className="w-4 h-4" />
-              Continue as Guest
-            </button>
+            {/* Guest option — hidden when arriving from checkout */}
+            {!isCheckout && (
+              <>
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1 h-px bg-subtle" />
+                  <span className="text-muted text-xs">or</span>
+                  <div className="flex-1 h-px bg-subtle" />
+                </div>
+                <button
+                  onClick={handleGuest}
+                  className="w-full bw-btn-outline justify-center py-2.5"
+                >
+                  <User className="w-4 h-4" />
+                  Continue as Guest
+                </button>
+              </>
+            )}
 
             {/* Terms note */}
             <p className="text-muted text-xs text-center mt-4 leading-relaxed">

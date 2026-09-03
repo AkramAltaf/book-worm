@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Menu, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import FilterBar from '../components/FilterBar';
+import FilterBar, { DEFAULT_FILTERS } from '../components/FilterBar';
+import type { FilterState } from '../components/FilterBar';
 import BookSection from '../components/BookSection';
 import BrandBrowser from '../components/BrandBrowser';
 import RecommendedFromHistory from '../components/RecommendedFromHistory';
@@ -10,13 +11,63 @@ import { allBooks, recommendedBooks, bestsellerBooks, newLaunchBooks } from '../
 import { useAuth } from '../context/AuthContext';
 import type { Book } from '../types';
 
+function applyFilters(books: Book[], filters: FilterState): Book[] {
+  let result = books;
+
+  // Search query
+  if (filters.searchQuery.trim()) {
+    const q = filters.searchQuery.toLowerCase();
+    result = result.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.author.toLowerCase().includes(q) ||
+        b.genres.some((g) => g.toLowerCase().includes(q))
+    );
+  }
+
+  // Language
+  if (filters.language !== 'All') {
+    result = result.filter((b) => b.language === filters.language);
+  }
+
+  // Format
+  if (filters.format !== 'All') {
+    result = result.filter((b) => b.format === filters.format);
+  }
+
+  // Price range
+  if (filters.priceRange !== 'All') {
+    result = result.filter((b) => {
+      const p = b.price;
+      switch (filters.priceRange) {
+        case 'Under ₹100':   return p < 100;
+        case '₹100–₹300':   return p >= 100 && p <= 300;
+        case '₹300–₹500':   return p > 300 && p <= 500;
+        case 'Above ₹500':  return p > 500;
+        default: return true;
+      }
+    });
+  }
+
+  // Sort
+  switch (filters.sortBy) {
+    case 'Price: Low to High':  result = [...result].sort((a, b) => a.price - b.price); break;
+    case 'Price: High to Low':  result = [...result].sort((a, b) => b.price - a.price); break;
+    case 'Newest':              result = [...result].sort((a, b) => b.id - a.id); break;
+    case 'Top Rated':           result = [...result].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)); break;
+    default: break;
+  }
+
+  return result;
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPublisher, setSelectedPublisher] = useState<string | undefined>();
-  const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
   // Category and publisher filters stay on this page — no navigation
   const handleSelectCategory = (id: string) => {
@@ -28,33 +79,26 @@ export default function HomePage() {
     setSelectedPublisher(id);
   };
 
+  const isFiltered = selectedCategory !== 'all';
+  const hasSearch = filters.searchQuery.trim().length > 0;
+
+  // Shared filter function (excludes publisher — applied separately below)
   const filterBooks = (books: Book[]) => {
-    let result = books;
-    if (selectedPublisher) {
-      result = result.filter((b) => b.publisherId === selectedPublisher);
-    }
-    if (!searchQuery.trim()) return result;
-    const q = searchQuery.toLowerCase();
-    return result.filter(
-      (b) =>
-        b.title.toLowerCase().includes(q) ||
-        b.author.toLowerCase().includes(q) ||
-        b.genres.some((g) => g.toLowerCase().includes(q))
-    );
+    let result = selectedPublisher
+      ? books.filter((b) => b.publisherId === selectedPublisher)
+      : books;
+    return applyFilters(result, filters);
   };
 
-  const isFiltered = selectedCategory !== 'all';
+  const categoryBooks = useMemo(
+    () => isFiltered ? filterBooks(allBooks.filter((b) => b.categoryId === selectedCategory)) : [],
+    [selectedCategory, isFiltered, selectedPublisher, filters]
+  );
 
-  const categoryBooks = isFiltered
-    ? filterBooks(allBooks.filter((b) => b.categoryId === selectedCategory))
-    : [];
-
-  const recommended = filterBooks(recommendedBooks);
-  const bestsellers = filterBooks(bestsellerBooks);
-  const newLaunches = filterBooks(newLaunchBooks);
-  const noResults = isFiltered
-    ? categoryBooks.length === 0
-    : recommended.length === 0 && bestsellers.length === 0 && newLaunches.length === 0;
+  const allFiltered  = useMemo(() => filterBooks(allBooks), [selectedPublisher, filters]);
+  const recommended  = useMemo(() => filterBooks(recommendedBooks), [selectedPublisher, filters]);
+  const bestsellers  = useMemo(() => filterBooks(bestsellerBooks), [selectedPublisher, filters]);
+  const newLaunches  = useMemo(() => filterBooks(newLaunchBooks), [selectedPublisher, filters]);
 
   const categoryName = isFiltered
     ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1).replace(/-/g, ' ')
@@ -71,9 +115,9 @@ export default function HomePage() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Filter / search bar */}
-        <div className="flex items-center">
+        <div className="flex items-stretch">
           <button
-            className="lg:hidden p-3 transition-colors"
+            className="lg:hidden px-3 transition-colors shrink-0"
             style={{
               color: 'var(--bw-text-secondary)',
               background: 'var(--bw-bg-surface)',
@@ -85,13 +129,13 @@ export default function HomePage() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <FilterBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+            <FilterBar filters={filters} onFiltersChange={setFilters} />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-5">
           {/* Personalised greeting — only on home (all) view */}
-          {isAuthenticated && user && !searchQuery && !isFiltered && (
+          {isAuthenticated && user && !hasSearch && !isFiltered && (
             <div className="px-4 mb-5">
               <div
                 className="p-4"
@@ -146,41 +190,57 @@ export default function HomePage() {
           {/* ── Default "All" view ── */}
           {!isFiltered && (
             <>
-              <BrandBrowser
-                selectedPublisherId={selectedPublisher}
-                onSelect={handleSelectPublisher}
-              />
+              {/* 1 — Publisher browser (hidden during search) */}
+              {!hasSearch && (
+                <BrandBrowser
+                  selectedPublisherId={selectedPublisher}
+                  onSelect={handleSelectPublisher}
+                />
+              )}
 
-              {recommended.length > 0 && (
+              {/* 2 — Full catalogue grid (all books, filtered/sorted) */}
+              {allFiltered.length > 0 ? (
                 <BookSection
-                  title="Recommended for You"
-                  books={recommended}
+                  title="Our Collection"
+                  books={allFiltered}
                   onBookClick={(b) => navigate(`/book/${b.id}`)}
                 />
-              )}
-              {bestsellers.length > 0 && (
-                <BookSection
-                  title="Bestsellers this Month"
-                  books={bestsellers}
-                  onBookClick={(b) => navigate(`/book/${b.id}`)}
-                />
-              )}
-              {newLaunches.length > 0 && (
-                <BookSection
-                  title="New Launches"
-                  books={newLaunches}
-                  onBookClick={(b) => navigate(`/book/${b.id}`)}
-                />
-              )}
-              {noResults && (
+              ) : (
                 <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--bw-text-muted)' }}>
-                  <p className="text-lg">No books found for "{searchQuery}"</p>
-                  <p className="text-sm mt-1">Try a different search term</p>
+                  <p className="text-lg">No books found</p>
+                  <p className="text-sm mt-1">Try a different search term or clear filters</p>
                 </div>
               )}
 
-              {/* Order-based recommendations — below all sections */}
-              {isAuthenticated && !searchQuery && (
+              {/* 3 — Curated editorial sections */}
+              {!hasSearch && (
+                <>
+                  {recommended.length > 0 && (
+                    <BookSection
+                      title="Recommended for You"
+                      books={recommended}
+                      onBookClick={(b) => navigate(`/book/${b.id}`)}
+                    />
+                  )}
+                  {bestsellers.length > 0 && (
+                    <BookSection
+                      title="Bestsellers this Month"
+                      books={bestsellers}
+                      onBookClick={(b) => navigate(`/book/${b.id}`)}
+                    />
+                  )}
+                  {newLaunches.length > 0 && (
+                    <BookSection
+                      title="New Launches"
+                      books={newLaunches}
+                      onBookClick={(b) => navigate(`/book/${b.id}`)}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* 4 — Order-based recommendations (authenticated users only) */}
+              {isAuthenticated && !hasSearch && (
                 <div className="px-4 mt-2 mb-6" style={{ borderTop: '1px solid var(--bw-border)' }}>
                   <div className="flex items-center gap-2 mt-5 mb-3">
                     <Sparkles className="w-4 h-4" style={{ color: 'var(--bw-accent)' }} />

@@ -1,4 +1,5 @@
-import { categories } from '../data/books';
+import { useMemo } from 'react';
+import { categories, allBooks } from '../data/books';
 
 interface SidebarProps {
   selectedCategory: string;
@@ -8,6 +9,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ selectedCategory, onSelectCategory, isOpen = true, onClose }: SidebarProps) {
+  // Book counts per category (memoised — categories are static)
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { all: allBooks.length };
+    for (const book of allBooks) {
+      map[book.categoryId] = (map[book.categoryId] ?? 0) + 1;
+    }
+    return map;
+  }, []);
+
   return (
     <>
       {/* Mobile overlay backdrop */}
@@ -26,35 +36,50 @@ export default function Sidebar({ selectedCategory, onSelectCategory, isOpen = t
         style={{ borderRight: '1px solid var(--bw-border)' }}
       >
         <ul className="py-2">
-          {categories.map((cat) => (
-            <li key={cat.id}>
-              <button
-                onClick={() => {
-                  onSelectCategory(cat.id);
-                  onClose?.();           // close drawer on mobile only
-                }}
-                className="w-full text-left px-4 py-2 text-sm transition-colors"
-                style={{
-                  color: selectedCategory === cat.id ? 'var(--bw-text-primary)' : 'var(--bw-text-secondary)',
-                  background: selectedCategory === cat.id ? 'var(--bw-bg-active)' : 'transparent',
-                  fontWeight: selectedCategory === cat.id ? 600 : 400,
-                  borderLeft: selectedCategory === cat.id
-                    ? '2px solid var(--bw-accent)'
-                    : '2px solid transparent',
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedCategory !== cat.id)
-                    e.currentTarget.style.background = 'var(--bw-bg-hover)';
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedCategory !== cat.id)
-                    e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                {cat.name}
-              </button>
-            </li>
-          ))}
+          {categories.map((cat) => {
+            const active = selectedCategory === cat.id;
+            const count = counts[cat.id];
+            return (
+              <li key={cat.id}>
+                <button
+                  onClick={() => {
+                    onSelectCategory(cat.id);
+                    onClose?.();           // close drawer on mobile only
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between gap-2"
+                  style={{
+                    color: active ? 'var(--bw-text-primary)' : 'var(--bw-text-secondary)',
+                    background: active ? 'var(--bw-bg-active)' : 'transparent',
+                    fontWeight: active ? 600 : 400,
+                    borderLeft: active
+                      ? '2px solid var(--bw-accent)'
+                      : '2px solid transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active)
+                      e.currentTarget.style.background = 'var(--bw-bg-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active)
+                      e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <span className="truncate">{cat.name}</span>
+                  {count != null && count > 0 && cat.id !== 'all' && (
+                    <span
+                      className="text-[10px] min-w-[18px] h-4 flex items-center justify-center font-medium shrink-0 px-1"
+                      style={{
+                        background: active ? 'var(--bw-accent)' : 'var(--bw-bg-subtle)',
+                        color: active ? '#fff' : 'var(--bw-text-muted)',
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </aside>
     </>

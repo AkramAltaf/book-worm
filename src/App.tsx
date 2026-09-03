@@ -12,7 +12,7 @@ import BookDetailPage from './pages/BookDetailPage';
 import CartPage from './pages/CartPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import WishlistPage from './pages/WishlistPage';
-import PlaceholderPage from './pages/PlaceholderPage';
+import WritersPage from './pages/WritersPage';
 
 function CatalogueRoute() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -37,7 +37,7 @@ function AppShell() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/orders" element={<ProtectedRoute><OrderHistoryPage /></ProtectedRoute>} />
           <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-          <Route path="/writers" element={<ProtectedRoute><PlaceholderPage title="My Writers" /></ProtectedRoute>} />
+          <Route path="/writers" element={<ProtectedRoute><WritersPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
